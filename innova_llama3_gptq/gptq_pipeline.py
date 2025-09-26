@@ -12,7 +12,7 @@ from typing import Optional, Union, List, Dict, Any
 
 import torch
 from accelerate import init_empty_weights
-from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
+from gptqmodel import GPTQModel, QuantizeConfig
 from datasets import load_dataset
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from tqdm import tqdm
@@ -37,16 +37,14 @@ class GPTQConfig:
     cache_examples_on_gpu: bool = False
     damp_percent: float = 0.01
 
-    def to_quantize_config(self) -> BaseQuantizeConfig:
-        """Convert to auto-gptq BaseQuantizeConfig"""
-        return BaseQuantizeConfig(
+    def to_quantize_config(self) -> QuantizeConfig:
+        """Convert to gptqmodel QuantizeConfig"""
+        return QuantizeConfig(
             bits=self.bits,
             group_size=self.group_size,
             desc_act=self.desc_act,
             sym=self.sym,
             true_sequential=self.true_sequential,
-            use_cuda_fp16=self.use_cuda_fp16,
-            model_seqlen=self.model_seqlen,
             damp_percent=self.damp_percent
         )
 
@@ -238,29 +236,20 @@ def quantize_llama3_gptq(
 
     # Load and quantize model
     logger.info("Loading model for quantization...")
-    model = AutoGPTQForCausalLM.from_pretrained(
+    model = GPTQModel.load(
         model_id,
         quantize_config=quantize_config,
         device_map="auto",
-        use_safetensors=use_safetensors,
         trust_remote_code=trust_remote_code,
         token=auth_token
     )
 
     logger.info("Starting quantization...")
-    model.quantize(
-        calib_examples,
-        batch_size=1,
-        use_triton=False,
-        cache_examples_on_gpu=False
-    )
+    model.quantize(calib_examples, batch_size=1)
 
     # Save quantized model
     logger.info(f"Saving quantized model to {out_path}")
-    model.save_quantized(
-        out_path,
-        use_safetensors=use_safetensors
-    )
+    model.save(out_path)
 
     # Save tokenizer
     tokenizer.save_pretrained(out_path)

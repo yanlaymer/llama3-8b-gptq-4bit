@@ -7,7 +7,8 @@ from pathlib import Path
 from typing import Dict, Any, List, Optional
 
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer
+from gptqmodel import GPTQModel
 
 logger = logging.getLogger(__name__)
 
@@ -121,7 +122,7 @@ def evaluate_generation_quality(
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoModelForCausalLM.from_pretrained(
+    model = GPTQModel.load(
         model_path,
         device_map="auto",
         trust_remote_code=trust_remote_code
@@ -198,7 +199,7 @@ def measure_inference_latency(
         trust_remote_code=trust_remote_code
     )
 
-    model = AutoModelForCausalLM.from_pretrained(
+    model = GPTQModel.load(
         model_path,
         device_map="auto",
         trust_remote_code=trust_remote_code

@@ -5,14 +5,15 @@ import torch
 import torch.nn.functional as F
 from datasets import load_dataset
 from tqdm import tqdm
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer
+from gptqmodel import GPTQModel
 from typing import Dict, Any, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
 
 def compute_perplexity(
-    model: AutoModelForCausalLM,
+    model,
     tokenizer: AutoTokenizer,
     dataset_name: str = "wikitext2",
     max_samples: Optional[int] = None,
@@ -146,7 +147,7 @@ def evaluate_perplexity_suite(
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
 
-    model = AutoModelForCausalLM.from_pretrained(
+    model = GPTQModel.load(
         model_path,
         device_map="auto",
         trust_remote_code=trust_remote_code

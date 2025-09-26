@@ -13,14 +13,8 @@ accelerate>=1.6.0
 safetensors>=0.5.3
 huggingface_hub>=0.30.1
 
-# Quantization - choose ONE:
-# Option A: Auto-GPTQ (original)
---extra-index-url https://huggingface.github.io/autogptq-index/whl/cu121/
-auto-gptq>=0.7.1
-
-# Option B: GPTQModel (recommended for T4)
-# Uncomment this and comment auto-gptq above:
-# gptqmodel>=3.0.0
+# Quantization library (GPTQModel - modern replacement for auto-gptq)
+gptqmodel>=3.0.0
 
 # Data processing
 datasets>=2.20.0

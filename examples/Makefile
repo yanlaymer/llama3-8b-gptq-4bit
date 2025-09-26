@@ -44,7 +44,7 @@ install-t4:
 	@echo "Installing optimized packages for Tesla T4 + CUDA 12.4..."
 	$(PYTHON) -m pip install -U pip
 	$(PYTHON) -m pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu121
-	$(PYTHON) -m pip install auto-gptq>=0.7.1 --extra-index-url https://huggingface.github.io/autogptq-index/whl/cu121/
+	$(PYTHON) -m pip install -v gptqmodel --no-build-isolation
 	$(PYTHON) -m pip install -e ..
 	$(PYTHON) -m pip install -r ../requirements-t4-cuda124.txt
 
