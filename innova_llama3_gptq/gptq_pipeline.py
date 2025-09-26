@@ -36,6 +36,11 @@ class GPTQConfig:
     use_exllama: bool = True
     cache_examples_on_gpu: bool = False
     damp_percent: float = 0.01
+    # T4-specific optimizations
+    offload_to_disk: bool = True
+    v2: bool = False
+    auto_gc: bool = True
+    buffered_fwd: bool = True
 
     def to_quantize_config(self) -> QuantizeConfig:
         """Convert to gptqmodel QuantizeConfig"""
@@ -45,7 +50,33 @@ class GPTQConfig:
             desc_act=self.desc_act,
             sym=self.sym,
             true_sequential=self.true_sequential,
-            damp_percent=self.damp_percent
+            damp_percent=self.damp_percent,
+            cache_examples_on_gpu=self.cache_examples_on_gpu,
+            offload_to_disk=self.offload_to_disk,
+            v2=self.v2
+        )
+
+    @classmethod
+    def for_t4_gpu(cls) -> "GPTQConfig":
+        """Create T4-optimized configuration"""
+        return cls(
+            bits=4,
+            group_size=128,
+            desc_act=True,
+            sym=True,
+            true_sequential=True,
+            use_cuda_fp16=True,
+            model_seqlen=4096,  # Increased for better calibration
+            batch_size=1,
+            use_fast=True,
+            use_triton=False,
+            use_exllama=True,
+            cache_examples_on_gpu=False,  # Critical for T4
+            damp_percent=0.01,
+            offload_to_disk=True,  # Saves ~73.5% CPU memory
+            v2=False,  # v2 requires 2-4x more VRAM
+            auto_gc=True,
+            buffered_fwd=True
         )
 
 
@@ -79,12 +110,14 @@ class CalibrationDataset:
         tokenizer: AutoTokenizer = None,
         max_samples: int = 512,
         max_length: int = 2048,
+        min_length: int = 256,
         seed: int = 42
     ):
         self.dataset_name = dataset_name
         self.tokenizer = tokenizer
         self.max_samples = max_samples
         self.max_length = max_length
+        self.min_length = min_length
         self.seed = seed
         random.seed(seed)
 
@@ -114,19 +147,27 @@ class CalibrationDataset:
         text_column = config["text_column"]
         examples = []
 
-        for item in tqdm(dataset, desc=f"Loading {self.dataset_name}"):
+        # Try to load more than needed in case some are filtered out
+        target_samples = min(self.max_samples * 2, len(dataset))
+
+        for item in tqdm(dataset.select(range(target_samples)), desc=f"Loading {self.dataset_name}"):
             text = item[text_column]
-            if text and len(text.strip()) > 0:
+            if text and len(text.strip()) > 50:  # Filter very short texts
                 examples.append({"text": text})
             if len(examples) >= self.max_samples:
                 break
+
+        if len(examples) < self.max_samples:
+            logger.warning(f"Only loaded {len(examples)} samples, expected {self.max_samples}")
 
         return examples
 
     def preprocess(self, examples: List[Dict[str, Any]]) -> List[Dict[str, torch.Tensor]]:
         """Tokenize and prepare examples for quantization"""
         processed = []
+        concatenated_texts = []
 
+        # Concatenate shorter texts to reach target length
         for example in tqdm(examples, desc="Preprocessing"):
             text = example.get("text", "")
             if not text:
@@ -140,11 +181,44 @@ class CalibrationDataset:
                 padding=False
             )
 
-            if tokens.input_ids.shape[1] >= 10:  # Skip very short sequences
+            # Only include sequences that meet minimum length requirement
+            if tokens.input_ids.shape[1] >= self.min_length:
                 processed.append({
                     "input_ids": tokens.input_ids[0],
                     "attention_mask": tokens.attention_mask[0]
                 })
+            elif tokens.input_ids.shape[1] >= 50:  # Still useful for concatenation
+                concatenated_texts.append(text)
+
+        # If we don't have enough long sequences, concatenate shorter ones
+        if len(processed) < self.max_samples // 2 and concatenated_texts:
+            logger.info(f"Concatenating shorter texts to create longer sequences...")
+
+            combined_text = ""
+            for text in concatenated_texts:
+                combined_text += text + " "
+                if len(combined_text) > self.max_length * 2:  # Enough for one sequence
+                    tokens = self.tokenizer(
+                        combined_text,
+                        return_tensors="pt",
+                        max_length=self.max_length,
+                        truncation=True,
+                        padding=False
+                    )
+
+                    if tokens.input_ids.shape[1] >= self.min_length:
+                        processed.append({
+                            "input_ids": tokens.input_ids[0],
+                            "attention_mask": tokens.attention_mask[0]
+                        })
+
+                    combined_text = ""
+
+                    if len(processed) >= self.max_samples:
+                        break
+
+        avg_length = sum(p["input_ids"].shape[0] for p in processed) / len(processed) if processed else 0
+        logger.info(f"Processed {len(processed)} sequences with average length {avg_length:.1f}")
 
         return processed
 
@@ -161,7 +235,8 @@ def quantize_llama3_gptq(
     seed: int = 42,
     device: str = "cuda",
     trust_remote_code: bool = False,
-    auth_token: Optional[str] = None
+    auth_token: Optional[str] = None,
+    use_t4_optimizations: bool = False
 ) -> str:
     """
     Main GPTQ quantization pipeline for Llama-3 models
@@ -183,8 +258,19 @@ def quantize_llama3_gptq(
     Returns:
         Path to quantized model directory
     """
+    import gc
+    import os
+
     torch.manual_seed(seed)
     random.seed(seed)
+
+    # Setup memory optimizations for T4 or low-VRAM environments
+    if use_t4_optimizations or "KAGGLE_KERNEL_RUN_TYPE" in os.environ or "COLAB_GPU" in os.environ:
+        logger.info("🚀 Applying T4/Kaggle/Colab memory optimizations...")
+        os.environ["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True,max_split_size_mb:128"
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        torch.backends.cuda.matmul.allow_tf32 = True
+        torch.backends.cudnn.allow_tf32 = True
 
     # Setup logging
     logging.basicConfig(
@@ -196,8 +282,19 @@ def quantize_llama3_gptq(
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
+    # Check GPU memory
+    if torch.cuda.is_available():
+        gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1e9
+        logger.info(f"🔧 GPU: {torch.cuda.get_device_name(0)} ({gpu_memory:.1f}GB VRAM)")
+        torch.cuda.empty_cache()
+
     logger.info(f"Starting GPTQ quantization for {model_id}")
     logger.info(f"Config: {bits}-bit, group_size={group_size}, desc_act={desc_act}")
+
+    # Apply T4 optimizations if needed
+    if use_t4_optimizations or (torch.cuda.is_available() and gpu_memory <= 16.5):
+        logger.info("📝 Using T4-optimized settings for low VRAM")
+        use_t4_optimizations = True
 
     # Load tokenizer
     logger.info("Loading tokenizer...")
@@ -216,6 +313,8 @@ def quantize_llama3_gptq(
         dataset_name=calib_dataset if not calib_dataset.endswith('.jsonl') else 'custom',
         tokenizer=tokenizer,
         max_samples=max_calib_samples,
+        max_length=4096 if use_t4_optimizations else 2048,
+        min_length=256,
         seed=seed
     )
 
@@ -228,11 +327,15 @@ def quantize_llama3_gptq(
     logger.info(f"Loaded {len(calib_examples)} calibration samples")
 
     # Setup quantization config
-    quantize_config = GPTQConfig(
-        bits=bits,
-        group_size=group_size,
-        desc_act=desc_act
-    ).to_quantize_config()
+    if use_t4_optimizations:
+        quantize_config = GPTQConfig.for_t4_gpu().to_quantize_config()
+        logger.info("📊 Using T4-optimized quantization config")
+    else:
+        quantize_config = GPTQConfig(
+            bits=bits,
+            group_size=group_size,
+            desc_act=desc_act
+        ).to_quantize_config()
 
     # Load and quantize model
     logger.info("Loading model for quantization...")
@@ -245,11 +348,45 @@ def quantize_llama3_gptq(
     )
 
     logger.info("Starting quantization...")
-    model.quantize(calib_examples, batch_size=1)
+
+    # Memory management during quantization
+    torch.cuda.empty_cache()
+    gc.collect()
+
+    try:
+        # Use optimized quantization parameters
+        quantization_kwargs = {
+            "batch_size": 1,
+            "calibration_dataset_min_length": 256 if use_t4_optimizations else 10,
+            "auto_gc": True if use_t4_optimizations else False
+        }
+
+        # Add cache_examples_on_gpu=False for T4 optimizations
+        if use_t4_optimizations:
+            quantization_kwargs["cache_examples_on_gpu"] = False
+            logger.info("💾 Using cache_examples_on_gpu=False for T4 optimization")
+
+        model.quantize(calib_examples, **quantization_kwargs)
+
+        # Clear memory after quantization
+        torch.cuda.empty_cache()
+        gc.collect()
+
+    except RuntimeError as e:
+        if "out of memory" in str(e).lower():
+            logger.error("🚨 GPU out of memory during quantization!")
+            logger.error("💡 Try reducing max_calib_samples or using cache_examples_on_gpu=False")
+            raise
+        else:
+            raise
 
     # Save quantized model
     logger.info(f"Saving quantized model to {out_path}")
     model.save(out_path)
+
+    # Clear memory after saving
+    torch.cuda.empty_cache()
+    gc.collect()
 
     # Save tokenizer
     tokenizer.save_pretrained(out_path)
@@ -310,3 +447,40 @@ def quantize_llama3_gptq(
 
     logger.info(f"Quantization complete! Model saved to {out_path}")
     return str(out_path)
+
+
+def quantize_llama3_gptq_t4_optimized(
+    model_id: str,
+    out_dir: str = "./artifacts/gptq/t4_optimized",
+    max_calib_samples: int = 256,
+    auth_token: Optional[str] = None
+) -> str:
+    """
+    T4-optimized GPTQ quantization with memory-efficient settings
+
+    Perfect for Kaggle, Colab, and other T4 GPU environments
+
+    Args:
+        model_id: Hugging Face model ID
+        out_dir: Output directory
+        max_calib_samples: Number of calibration samples (reduced for speed)
+        auth_token: HuggingFace token
+
+    Returns:
+        Path to quantized model
+    """
+    return quantize_llama3_gptq(
+        model_id=model_id,
+        bits=4,
+        group_size=128,
+        desc_act=True,
+        calib_dataset="wikitext2",
+        max_calib_samples=max_calib_samples,
+        out_dir=out_dir,
+        use_safetensors=True,
+        seed=42,
+        device="cuda",
+        trust_remote_code=False,
+        auth_token=auth_token,
+        use_t4_optimizations=True
+    )

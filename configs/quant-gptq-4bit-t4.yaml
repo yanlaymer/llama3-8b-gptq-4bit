@@ -1,0 +1,59 @@
+# GPTQ 4-bit T4 Optimized Configuration
+# Optimized for Tesla T4 GPUs (15-16GB VRAM) in Kaggle/Colab environments
+
+quantization:
+  bits: 4
+  group_size: 128
+  desc_act: true
+  sym: true
+  true_sequential: true
+  damp_percent: 0.01
+  # T4-specific optimizations
+  cache_examples_on_gpu: false  # Critical for T4 - saves VRAM
+  offload_to_disk: true         # Saves ~73.5% CPU memory
+  v2: false                     # v2 requires 2-4x more VRAM
+  auto_gc: true                 # Automatic garbage collection
+  buffered_fwd: true            # Buffered forward pass
+
+calibration:
+  dataset: "wikitext2"
+  max_samples: 256              # Reduced for faster processing
+  max_length: 4096              # Increased for better calibration quality
+  min_length: 256               # Ensure good sequence quality
+  batch_size: 1                 # Conservative for 15GB VRAM
+
+model:
+  use_cuda_fp16: true           # T4 supports FP16, not BF16
+  use_fast_tokenizer: true
+  trust_remote_code: false
+  device_map: "auto"
+
+optimization:
+  use_triton: false             # Not needed on T4
+  use_exllama: true             # Good acceleration
+  use_tf32: true                # Better performance on T4
+
+memory:
+  pytorch_cuda_alloc_conf: "expandable_segments:True,max_split_size_mb:128"
+  cuda_device_order: "PCI_BUS_ID"
+  clear_cache_frequently: true
+
+evaluation:
+  perplexity:
+    datasets: ["wikitext2"]
+    max_samples_per_dataset: 100  # Reduced for faster eval
+    batch_size: 1
+
+  latency:
+    batch_sizes: [1, 2]          # Conservative batch sizes
+    sequence_length: 512
+    num_iterations: 3            # Reduced iterations
+
+  tasks:
+    batch_size: 1
+    max_samples: 50              # Reduced for faster eval
+
+export:
+  use_safetensors: true
+  compress: true
+  create_model_card: true
