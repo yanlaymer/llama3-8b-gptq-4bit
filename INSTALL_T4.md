@@ -8,31 +8,16 @@
 
 ## 📋 Quick Installation
 
-### Option A: Auto-GPTQ (Original)
-```bash
-# 1. Install PyTorch with CUDA 12.1 (compatible with 12.4)
-pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 \
-    --index-url https://download.pytorch.org/whl/cu121
-
-# 2. Install auto-gptq with CUDA 12.1 wheels
-pip install auto-gptq>=0.7.1 \
-    --extra-index-url https://huggingface.github.io/autogptq-index/whl/cu121/
-
-# 3. Install the toolkit
-cd innova-llama3-gptq
-pip install -e .
-```
-
-### Option B: GPTQModel (Recommended)
+### Recommended Installation (GPTQModel)
 ```bash
 # 1. Install PyTorch
 pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 \
     --index-url https://download.pytorch.org/whl/cu121
 
-# 2. Install GPTQModel (better T4 support)
+# 2. Install GPTQModel (optimized for Tesla T4)
 pip install -v gptqmodel --no-build-isolation
 
-# 3. Install the toolkit (modify to use gptqmodel)
+# 3. Install the toolkit
 cd innova-llama3-gptq
 pip install -e .
 ```
@@ -44,19 +29,15 @@ pip install -r requirements-t4-cuda124.txt
 
 ## ⚠️ Common Issues & Solutions
 
-### Issue: "torch not installed" during auto-gptq install
-**Solution**: Install PyTorch first, then auto-gptq
+### Issue: GPTQModel installation fails
+**Solution**: Install PyTorch first, then GPTQModel with no-build-isolation
 ```bash
 pip install torch first
-pip install auto-gptq
+pip install -v gptqmodel --no-build-isolation
 ```
 
-### Issue: CUDA kernel compilation fails
-**Solution**: Use pre-built wheels instead of building from source
-```bash
-pip install auto-gptq --no-build-isolation \
-    --extra-index-url https://huggingface.github.io/autogptq-index/whl/cu121/
-```
+### Issue: CUDA compilation errors
+**Solution**: GPTQModel comes with pre-built wheels, avoiding compilation issues
 
 ### Issue: "BFloat16 not supported on T4"
 **Solution**: T4 supports FP16, not BF16. Our toolkit handles this automatically.
@@ -75,12 +56,12 @@ import torch
 print(f"CUDA available: {torch.cuda.is_available()}")
 print(f"GPU: {torch.cuda.get_device_name(0)}")
 
-# Test auto-gptq
+# Test GPTQModel
 try:
-    from auto_gptq import AutoGPTQForCausalLM
-    print("✅ auto-gptq installed correctly")
+    from gptqmodel import GPTQModel, QuantizeConfig
+    print("✅ GPTQModel installed correctly")
 except ImportError as e:
-    print(f"❌ auto-gptq issue: {e}")
+    print(f"❌ GPTQModel issue: {e}")
 
 # Test toolkit
 try:
@@ -117,30 +98,17 @@ calibration:
 | Compression Ratio | 4× |
 | Inference Speedup | 2-3× |
 
-## 🔄 Migration from auto-gptq to GPTQModel
+## ✨ Why GPTQModel?
 
-If you want to use the newer GPTQModel library:
+This toolkit now exclusively uses GPTQModel (the modern successor to auto-gptq):
 
-1. **Install GPTQModel**:
-```bash
-pip uninstall auto-gptq
-pip install -v gptqmodel --no-build-isolation
-```
-
-2. **Update imports** in the toolkit:
-```python
-# Old
-from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
-
-# New
-from gptqmodel import GPTQModel, QuantizeConfig
-```
-
-3. **Benefits**:
-- Better T4 support
-- Faster quantization
-- More stable on CUDA 12.4
-- Active development
+**Key Benefits**:
+- ✅ Better Tesla T4 support with optimized kernels
+- ✅ Faster installation with pre-built wheels
+- ✅ More stable on CUDA 12.4
+- ✅ Active development and better documentation
+- ✅ Cleaner API with better error messages
+- ✅ No compilation issues in cloud environments
 
 ## ✅ Final Check
 

@@ -110,9 +110,10 @@ quantized_path = quantize_llama3_gptq(
 )
 
 # Load and use
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer
+from gptqmodel import GPTQModel
 
-model = AutoModelForCausalLM.from_pretrained(quantized_path, device_map="auto")
+model = GPTQModel.load(quantized_path, device_map="auto")
 tokenizer = AutoTokenizer.from_pretrained(quantized_path)
 
 # Generate text
@@ -198,11 +199,12 @@ python -m vllm.entrypoints.openai.api_server \
 ### Loading from Hub
 
 ```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer
+from gptqmodel import GPTQModel
 
 model_id = "innova/llama3-8b-instruct-gptq"
 
-model = AutoModelForCausalLM.from_pretrained(
+model = GPTQModel.load(
     model_id,
     device_map="auto",
     trust_remote_code=False

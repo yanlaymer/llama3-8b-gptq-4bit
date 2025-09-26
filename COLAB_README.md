@@ -75,10 +75,11 @@ After completion, you'll have:
 ## Using Your Quantized Model
 
 ```python
-from transformers import AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoTokenizer
+from gptqmodel import GPTQModel
 
 tokenizer = AutoTokenizer.from_pretrained("nalrunyan/llama3-8b-gptq-4bit")
-model = AutoModelForCausalLM.from_pretrained("nalrunyan/llama3-8b-gptq-4bit", device_map="auto")
+model = GPTQModel.load("nalrunyan/llama3-8b-gptq-4bit", device_map="auto")
 
 prompt = "The future of AI is"
 inputs = tokenizer(prompt, return_tensors="pt")

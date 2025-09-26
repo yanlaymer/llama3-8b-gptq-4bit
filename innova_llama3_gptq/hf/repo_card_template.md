@@ -63,18 +63,19 @@ This model has been quantized using GPTQ (Generative Pre-trained Transformer Qua
 ### Installation
 
 ```bash
-pip install transformers accelerate auto-gptq
+pip install transformers accelerate gptqmodel
 ```
 
 ### Loading the Model
 
 ```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoTokenizer
+from gptqmodel import GPTQModel
 
 model_id = "{{HF_REPO_ID}}"
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
-model = AutoModelForCausalLM.from_pretrained(
+model = GPTQModel.load(
     model_id,
     device_map="auto",
     trust_remote_code=False
