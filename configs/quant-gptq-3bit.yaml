@@ -2,7 +2,7 @@
 model:
   id: "meta-llama/Meta-Llama-3-8B-Instruct"
   trust_remote_code: false
-  auth_token: "[REDACTED_HF_TOKEN]"
+  auth_token: "${HF_TOKEN}"
 
 quantization:
   bits: 3

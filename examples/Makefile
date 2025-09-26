@@ -22,7 +22,7 @@ help:
 	@echo "  MODEL_ID    Base model ID (default: $(MODEL_ID))"
 	@echo "  HF_ORG      Hugging Face org (default: $(HF_ORG))"
 	@echo "  REPO_NAME   Repository name (default: $(REPO_NAME))"
-	@echo "  HF_TOKEN    Hugging Face auth token (set to: [REDACTED_HF_TOKEN])"
+	@echo "  HF_TOKEN    Hugging Face auth token (export HF_TOKEN=\"<your_token>\")"
 
 install:
 	$(PYTHON) -m pip install -U pip
@@ -47,7 +47,7 @@ quantize-4bit:
 		--max-calib-samples 512 \
 		--out-dir artifacts/gptq/4bit \
 		--seed 42 \
-		--auth-token [REDACTED_HF_TOKEN]
+		--auth-token $(HF_TOKEN)
 
 quantize-3bit:
 	$(PYTHON) ../scripts/quantize_llama3_gptq.py \
@@ -59,7 +59,7 @@ quantize-3bit:
 		--max-calib-samples 1024 \
 		--out-dir artifacts/gptq/3bit \
 		--seed 42 \
-		--auth-token [REDACTED_HF_TOKEN]
+		--auth-token $(HF_TOKEN)
 
 eval:
 	@if [ ! -d "artifacts/gptq/4bit" ]; then \
@@ -108,7 +108,7 @@ export-hf-push:
 		--results-dir results \
 		--private \
 		--push \
-		--token [REDACTED_HF_TOKEN]
+		--token $(HF_TOKEN)
 
 full-pipeline: quantize-4bit eval export-hf
 	@echo "========================================="
