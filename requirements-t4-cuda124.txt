@@ -1,0 +1,43 @@
+# Tesla T4 + CUDA 12.4 Optimized Requirements
+# Install with: pip install -r requirements-t4-cuda124.txt
+
+# PyTorch with CUDA 12.1 support (compatible with CUDA 12.4)
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.4.1
+torchvision==0.19.1
+torchaudio==2.4.1
+
+# Core ML libraries
+transformers>=4.51.2
+accelerate>=1.6.0
+safetensors>=0.5.3
+huggingface_hub>=0.30.1
+
+# Quantization - choose ONE:
+# Option A: Auto-GPTQ (original)
+--extra-index-url https://huggingface.github.io/autogptq-index/whl/cu121/
+auto-gptq>=0.7.1
+
+# Option B: GPTQModel (recommended for T4)
+# Uncomment this and comment auto-gptq above:
+# gptqmodel>=3.0.0
+
+# Data processing
+datasets>=2.20.0
+numpy>=1.26.4
+pandas>=2.0.0
+tqdm>=4.65.0
+pyyaml>=6.0
+
+# Utilities
+packaging>=24.2
+threadpoolctl>=3.6.0
+psutil>=5.9.0
+
+# Optional: Evaluation
+lm_eval>=0.4.7
+
+# Development (optional)
+jupyter>=1.0.0
+ipywidgets>=8.0.0
+matplotlib>=3.7.0

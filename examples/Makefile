@@ -9,8 +9,12 @@ REPO_NAME ?= llama3-8b-gptq-4bit
 help:
 	@echo "Innova Llama-3 GPTQ Toolkit"
 	@echo ""
+	@echo "Installation:"
+	@echo "  make install-t4      Install optimized for Tesla T4 + CUDA 12.4"
+	@echo "  make install         Install using requirements file"
+	@echo "  make install-basic   Install basic dependencies"
+	@echo ""
 	@echo "Usage:"
-	@echo "  make install         Install dependencies"
 	@echo "  make quantize-4bit   Quantize model to 4-bit GPTQ"
 	@echo "  make quantize-3bit   Quantize model to 3-bit GPTQ"
 	@echo "  make eval           Run full evaluation suite"
@@ -27,9 +31,22 @@ help:
 install:
 	$(PYTHON) -m pip install -U pip
 	$(PYTHON) -m pip install -e ..
+	$(PYTHON) -m pip install -r ../requirements-t4-cuda124.txt
+
+install-basic:
+	$(PYTHON) -m pip install -U pip
+	$(PYTHON) -m pip install -e ..
 	$(PYTHON) -m pip install transformers>=4.44.0 accelerate>=0.33.0
 	$(PYTHON) -m pip install datasets huggingface_hub auto-gptq
 	$(PYTHON) -m pip install lm_eval safetensors pyyaml
+
+install-t4:
+	@echo "Installing optimized packages for Tesla T4 + CUDA 12.4..."
+	$(PYTHON) -m pip install -U pip
+	$(PYTHON) -m pip install torch==2.4.1 torchvision==0.19.1 torchaudio==2.4.1 --index-url https://download.pytorch.org/whl/cu121
+	$(PYTHON) -m pip install auto-gptq>=0.7.1 --extra-index-url https://huggingface.github.io/autogptq-index/whl/cu121/
+	$(PYTHON) -m pip install -e ..
+	$(PYTHON) -m pip install -r ../requirements-t4-cuda124.txt
 
 clean:
 	rm -rf artifacts/
