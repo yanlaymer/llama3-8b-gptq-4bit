@@ -1,0 +1,48 @@
+# Evaluation configuration
+perplexity:
+  enabled: true
+  datasets:
+    - wikitext2
+    - c4
+  max_samples: 1000
+  max_length: 2048
+  batch_size: 1
+
+tasks:
+  enabled: true
+  names:
+    - hellaswag
+    - arc_easy
+    - mmlu
+  num_fewshot: 0
+  batch_size: 1
+  use_lm_eval: true  # Try lm-eval-harness first, fallback to custom
+
+generation:
+  enabled: true
+  max_new_tokens: 32
+  temperature: 0.7
+  top_p: 0.9
+  prompts:
+    - "The future of artificial intelligence is"
+    - "Climate change can be addressed by"
+    - "The most important scientific discovery was"
+
+latency:
+  enabled: true
+  batch_sizes:
+    - 1
+    - 4
+    - 8
+  sequence_length: 512
+  num_iterations: 10
+  warmup_iterations: 3
+
+reporting:
+  formats:
+    - json
+    - markdown
+    - csv
+  include_hardware_info: true
+  include_git_info: true
+  comparison_baseline: null  # Path to baseline results for comparison

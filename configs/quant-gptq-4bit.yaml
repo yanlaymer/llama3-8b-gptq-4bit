@@ -1,0 +1,34 @@
+# GPTQ 4-bit quantization configuration
+model:
+  id: "meta-llama/Meta-Llama-3-8B-Instruct"
+  trust_remote_code: false
+  auth_token: "[REDACTED_HF_TOKEN]"
+
+quantization:
+  bits: 4
+  group_size: 128
+  desc_act: true
+  sym: true
+  true_sequential: true
+  use_cuda_fp16: true
+  model_seqlen: 2048
+  damp_percent: 0.01
+
+calibration:
+  dataset: "wikitext2"  # Options: wikitext2, c4, ptb, or path to .jsonl
+  max_samples: 512
+  max_length: 2048
+  seed: 42
+
+output:
+  dir: "artifacts/gptq/4bit"
+  use_safetensors: true
+  save_tokenizer: true
+  save_generation_config: true
+
+hardware:
+  device: "cuda"
+  batch_size: 1
+  use_triton: false
+  use_exllama: true
+  cache_examples_on_gpu: false

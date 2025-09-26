@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "innova-llama3-gptq"
+version = "0.1.0"
+description = "Innova's Llama-3 GPTQ quantization & eval toolkit"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+authors = [
+    {name = "Innova Engineering", email = "engineering@innova.example"}
+]
+maintainers = [
+    {name = "Innova ML Team", email = "ml-team@innova.example"}
+]
+requires-python = ">=3.10"
+dependencies = [
+    "transformers>=4.44.0",
+    "accelerate>=0.33.0",
+    "datasets>=2.20.0",
+    "huggingface_hub>=0.24.0",
+    "auto-gptq>=0.7.1",
+    "safetensors>=0.4.3",
+    "numpy>=1.24.0",
+    "torch>=2.1.0",
+    "tqdm>=4.65.0",
+    "pyyaml>=6.0",
+    "pandas>=2.0.0",
+    "psutil>=5.9.0"
+]
+
+[project.optional-dependencies]
+eval = [
+    "lm_eval>=0.4.2"
+]
+dev = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0"
+]
+notebook = [
+    "jupyter>=1.0.0",
+    "ipywidgets>=8.0.0",
+    "matplotlib>=3.7.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/innova-ai/llama3-gptq"
+Documentation = "https://docs.innova.example/llama3-gptq"
+Repository = "https://github.com/innova-ai/llama3-gptq"
+Issues = "https://github.com/innova-ai/llama3-gptq/issues"
+
+[tool.setuptools]
+packages = ["innova_llama3_gptq", "innova_llama3_gptq.evals", "innova_llama3_gptq.hf"]
+
+[tool.setuptools.package-data]
+innova_llama3_gptq = ["hf/*.md", "hf/*.json"]
