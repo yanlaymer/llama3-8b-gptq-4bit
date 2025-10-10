@@ -84,23 +84,56 @@ class CalibrationDataset:
     """Manages calibration dataset loading and preprocessing"""
 
     DATASET_CONFIGS = {
+        # General domain datasets
         "wikitext2": {
             "name": "wikitext",
             "config": "wikitext-2-raw-v1",
             "split": "test",
-            "text_column": "text"
+            "text_column": "text",
+            "format_fn": None
         },
         "c4": {
             "name": "c4",
             "config": "en",
             "split": "validation",
-            "text_column": "text"
+            "text_column": "text",
+            "format_fn": None
         },
         "ptb": {
             "name": "ptb_text_only",
             "config": None,
             "split": "test",
-            "text_column": "sentence"
+            "text_column": "sentence",
+            "format_fn": None
+        },
+        # Medical domain datasets
+        "pubmedqa": {
+            "name": "qiaojin/PubMedQA",
+            "config": "pqa_labeled",
+            "split": "train",
+            "text_column": None,  # Custom formatting needed
+            "format_fn": "format_pubmedqa"
+        },
+        "medqa": {
+            "name": "bigbio/med_qa",
+            "config": "med_qa_en_bigbio_qa",
+            "split": "train",
+            "text_column": None,
+            "format_fn": "format_medqa"
+        },
+        "pmc_patients": {
+            "name": "AGBonnet/augmented-clinical-notes",
+            "config": None,
+            "split": "train",
+            "text_column": "text",
+            "format_fn": None
+        },
+        "asclepius_notes": {
+            "name": "starmpcc/Asclepius-Synthetic-Clinical-Notes",
+            "config": None,
+            "split": "train",
+            "text_column": "text",
+            "format_fn": None
         }
     }
 
@@ -120,6 +153,29 @@ class CalibrationDataset:
         self.min_length = min_length
         self.seed = seed
         random.seed(seed)
+
+    @staticmethod
+    def format_pubmedqa(item: Dict[str, Any]) -> str:
+        """Format PubMedQA item into calibration text"""
+        question = item.get("QUESTION", "")
+        long_answer = item.get("LONG_ANSWER", "")
+        # Combine question and answer for medical reasoning context
+        return f"{question}\n\n{long_answer}"
+
+    @staticmethod
+    def format_medqa(item: Dict[str, Any]) -> str:
+        """Format MedQA item into calibration text"""
+        question = item.get("question", "")
+        choices_dict = item.get("choices", [])
+
+        # Format choices
+        if isinstance(choices_dict, list):
+            choices_text = "\n".join([f"{i+1}. {choice}" for i, choice in enumerate(choices_dict)])
+        else:
+            choices_text = ""
+
+        # Combine question and choices
+        return f"{question}\n\nOptions:\n{choices_text}" if choices_text else question
 
     def load_from_file(self, filepath: str) -> List[Dict[str, Any]]:
         """Load calibration data from JSONL file"""
@@ -144,14 +200,28 @@ class CalibrationDataset:
             split=config["split"]
         )
 
-        text_column = config["text_column"]
+        text_column = config.get("text_column")
+        format_fn_name = config.get("format_fn")
         examples = []
+
+        # Get format function if specified
+        format_fn = None
+        if format_fn_name:
+            format_fn = getattr(self, format_fn_name, None)
 
         # Try to load more than needed in case some are filtered out
         target_samples = min(self.max_samples * 2, len(dataset))
 
         for item in tqdm(dataset.select(range(target_samples)), desc=f"Loading {self.dataset_name}"):
-            text = item[text_column]
+            # Extract text using either format function or text column
+            if format_fn:
+                text = format_fn(item)
+            elif text_column:
+                text = item[text_column]
+            else:
+                logger.warning(f"No text_column or format_fn for {self.dataset_name}")
+                continue
+
             if text and len(text.strip()) > 50:  # Filter very short texts
                 examples.append({"text": text})
             if len(examples) >= self.max_samples:
