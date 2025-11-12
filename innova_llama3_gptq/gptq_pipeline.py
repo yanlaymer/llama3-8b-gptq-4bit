@@ -331,6 +331,11 @@ def quantize_llama3_gptq(
     torch.manual_seed(seed)
     random.seed(seed)
 
+    # Handle authentication token
+    if auth_token:
+        os.environ["HF_TOKEN"] = auth_token
+        logger.info("Set HF_TOKEN from auth_token parameter")
+
     # Setup memory optimizations for T4 or low-VRAM environments
     if use_t4_optimizations or "KAGGLE_KERNEL_RUN_TYPE" in os.environ or "COLAB_GPU" in os.environ:
         logger.info("🚀 Applying T4/Kaggle/Colab memory optimizations...")
@@ -406,12 +411,13 @@ def quantize_llama3_gptq(
 
     # Load and quantize model
     logger.info("Loading model for quantization...")
+    # Note: auth_token is handled via HF_TOKEN env var or huggingface_hub.login()
+    # GPTQModel.load() doesn't accept token parameter - it gets passed to model constructor incorrectly
     model = GPTQModel.load(
         model_id,
         quantize_config=quantize_config,
         device_map="auto",
-        trust_remote_code=trust_remote_code,
-        token=auth_token
+        trust_remote_code=trust_remote_code
     )
 
     logger.info("Starting quantization...")
