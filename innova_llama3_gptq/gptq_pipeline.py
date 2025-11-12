@@ -428,17 +428,13 @@ def quantize_llama3_gptq(
 
     try:
         # Use optimized quantization parameters
-        # Note: gptqmodel.quantize() only accepts: batch_size, cache_examples_on_gpu
-        quantization_kwargs = {
-            "batch_size": 1
-        }
-
-        # Add cache_examples_on_gpu=False for T4 optimizations
+        # Note: gptqmodel.quantize() has minimal parameters - just pass calibration data
+        # T4 optimizations are handled via QuantizeConfig (offload_to_disk, etc)
         if use_t4_optimizations:
-            quantization_kwargs["cache_examples_on_gpu"] = False
-            logger.info("💾 Using cache_examples_on_gpu=False for T4 optimization")
+            logger.info("💾 Using T4 optimizations (configured via offload_to_disk in QuantizeConfig)")
 
-        model.quantize(calib_examples, **quantization_kwargs)
+        # Simple quantize call - the library handles batching and memory management internally
+        model.quantize(calib_examples)
 
         # Clear memory after quantization
         torch.cuda.empty_cache()
