@@ -428,10 +428,9 @@ def quantize_llama3_gptq(
 
     try:
         # Use optimized quantization parameters
+        # Note: gptqmodel.quantize() only accepts: batch_size, cache_examples_on_gpu
         quantization_kwargs = {
-            "batch_size": 1,
-            "calibration_dataset_min_length": 256 if use_t4_optimizations else 10,
-            "auto_gc": True if use_t4_optimizations else False
+            "batch_size": 1
         }
 
         # Add cache_examples_on_gpu=False for T4 optimizations
