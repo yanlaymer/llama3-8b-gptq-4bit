@@ -50,10 +50,7 @@ class GPTQConfig:
             desc_act=self.desc_act,
             sym=self.sym,
             true_sequential=self.true_sequential,
-            damp_percent=self.damp_percent,
-            cache_examples_on_gpu=self.cache_examples_on_gpu,
-            offload_to_disk=self.offload_to_disk,
-            v2=self.v2
+            damp_percent=self.damp_percent
         )
 
     @classmethod
