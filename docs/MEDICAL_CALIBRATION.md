@@ -780,6 +780,21 @@ python scripts/quantize_llama3_gptq.py \
 
 ---
 
-**Last Updated**: November 18, 2024
+## Validated Production Model
+
+A model quantized using this medical calibration approach is available at:
+
+**Model**: [`nalrunyan/llama3-8b-gptq-4bit`](https://huggingface.co/nalrunyan/llama3-8b-gptq-4bit)
+
+**Validation Results** (December 2024):
+- **Pass Rate**: 86.7% across 15 medical test cases
+- **Average Coverage**: 83.2%
+- **Throughput**: 321.8 tokens/sec on NVIDIA L4
+
+See [`deploy_eval/VALIDATION_REPORT.md`](../deploy_eval/VALIDATION_REPORT.md) for complete validation details.
+
+---
+
+**Last Updated**: December 31, 2024
 **Maintainer**: Innova ML Platform Team
 **Questions?** Open an issue on GitHub or email ml-platform@innova.example (fictional)

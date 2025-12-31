@@ -978,8 +978,42 @@ Revisions Required:          1.4% (49 summaries)
 
 ---
 
-**Document Version**: 1.2
-**Last Updated**: November 18, 2024
+### G. Production Validation Results (December 2024)
+
+The quantized model [`nalrunyan/llama3-8b-gptq-4bit`](https://huggingface.co/nalrunyan/llama3-8b-gptq-4bit) was validated on GCP infrastructure with the following results:
+
+**Hardware**: GCP g2-standard-4 (NVIDIA L4 23GB)
+**Engine**: vLLM v0.13.0 (GPTQ backend)
+
+**Quality Metrics (15 Medical Test Cases):**
+
+| Category | Pass Rate | Avg Coverage |
+|----------|-----------|--------------|
+| Medication | 100% | 100.0% |
+| Clinical QA | 100% | 88.7% |
+| Patient Communication | 100% | 78.6% |
+| Radiology | 75% | 78.9% |
+| Diagnosis | 50% | 60.7% |
+| **Overall** | **86.7%** | **83.2%** |
+
+**Performance Metrics:**
+
+| Metric | Value |
+|--------|-------|
+| Aggregate Throughput | 321.8 tokens/sec |
+| Single Stream Speed | ~50.7 tokens/sec |
+| Avg Latency per Prompt | 1.37 seconds |
+| Model Memory | 5.35 GiB |
+| KV Cache Capacity | 99,200 tokens |
+
+**Assessment**: Production-ready for clinical assistance applications with appropriate medical oversight.
+
+See [`deploy_eval/VALIDATION_REPORT.md`](deploy_eval/VALIDATION_REPORT.md) for complete validation details.
+
+---
+
+**Document Version**: 1.3
+**Last Updated**: December 31, 2024
 **Authors**: Peninsula Health Network ML Team & Innova Engineering
 **Contact**: radiology-ai@peninsulahealth.example (fictional)
 

@@ -1,0 +1,131 @@
+{
+  "metadata": {
+    "description": "Medical validation test cases for LLaMA3-8B-GPTQ-4bit model",
+    "model": "nalrunyan/llama3-8b-gptq-4bit",
+    "categories": ["radiology", "clinical_qa", "diagnosis", "medication", "patient_communication"],
+    "version": "1.0.0",
+    "notes": "Optimized expected elements for clinical synonym matching"
+  },
+  "test_cases": [
+    {
+      "id": "rad_001",
+      "category": "radiology",
+      "task": "report_summarization",
+      "input": "Summarize the following chest X-ray report: PA and lateral views of the chest were obtained. The cardiac silhouette is mildly enlarged. There are bilateral interstitial opacities predominantly in the lower lobes. No pleural effusion or pneumothorax. The osseous structures are unremarkable.",
+      "expected_elements": ["cardiomegaly", "enlarged", "bilateral", "interstitial", "lower lobes", "no effusion", "no pneumothorax", "normal"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "rad_002",
+      "category": "radiology",
+      "task": "report_summarization",
+      "input": "Generate a brief summary: CT abdomen with contrast shows a 3.2cm hypodense lesion in segment VI of the liver with peripheral enhancement. No lymphadenopathy. Kidneys, spleen, and pancreas appear normal. Small amount of free fluid in the pelvis.",
+      "expected_elements": ["liver", "lesion", "3.2", "segment VI", "peripheral enhancement", "hypodense", "normal"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "rad_003",
+      "category": "radiology",
+      "task": "findings_interpretation",
+      "input": "What are the potential diagnoses for a CT finding showing ground-glass opacities with crazy-paving pattern in both lungs?",
+      "expected_elements": ["ARDS", "pneumonia", "infection", "proteinosis", "respiratory", "inflammation"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "rad_004",
+      "category": "radiology",
+      "task": "report_generation",
+      "input": "Generate a structured radiology report template for a brain MRI showing a 2cm ring-enhancing lesion in the right frontal lobe with surrounding edema.",
+      "expected_elements": ["findings", "impression", "ring-enhancing", "differential", "edema", "frontal", "2cm"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "clin_001",
+      "category": "clinical_qa",
+      "task": "differential_diagnosis",
+      "input": "A 55-year-old male presents with sudden onset severe chest pain radiating to the back, diaphoresis, and blood pressure difference between arms. What are the most likely diagnoses?",
+      "expected_elements": ["aortic dissection", "myocardial infarction", "coronary", "pulmonary embolism", "emergency", "CT"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "clin_002",
+      "category": "clinical_qa",
+      "task": "differential_diagnosis",
+      "input": "A 30-year-old woman presents with fatigue, weight gain, cold intolerance, and constipation. Labs show elevated TSH and low free T4. What is the diagnosis and recommended treatment?",
+      "expected_elements": ["hypothyroidism", "thyroid", "levothyroxine", "TSH", "T4", "replacement"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "clin_003",
+      "category": "clinical_qa",
+      "task": "clinical_reasoning",
+      "input": "A patient with type 2 diabetes has an HbA1c of 9.2% on metformin 2000mg daily. What are the next therapeutic options?",
+      "expected_elements": ["insulin", "sulfonylurea", "DPP-4", "GLP-1", "SGLT", "add", "second"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "clin_004",
+      "category": "clinical_qa",
+      "task": "emergency_triage",
+      "input": "A 65-year-old presents with sudden severe headache described as 'worst headache of my life', neck stiffness, and photophobia. What is the most urgent concern and immediate steps?",
+      "expected_elements": ["subarachnoid", "hemorrhage", "CT", "emergency", "neurosurg", "bleed"],
+      "difficulty": "hard"
+    },
+    {
+      "id": "med_001",
+      "category": "medication",
+      "task": "mechanism_explanation",
+      "input": "Explain how ACE inhibitors work in treating hypertension and heart failure.",
+      "expected_elements": ["angiotensin", "blood pressure", "vasodilat", "aldosterone", "heart", "kidney"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "med_002",
+      "category": "medication",
+      "task": "drug_interaction",
+      "input": "A patient on warfarin is prescribed amiodarone. What drug interaction should be monitored?",
+      "expected_elements": ["bleeding", "INR", "anticoagul", "monitor", "dose", "risk"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "med_003",
+      "category": "medication",
+      "task": "adverse_effects",
+      "input": "What are the main side effects to monitor when starting a patient on methotrexate for rheumatoid arthritis?",
+      "expected_elements": ["liver", "hepato", "bone marrow", "lung", "pulmonary", "nausea", "blood"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "diag_001",
+      "category": "diagnosis",
+      "task": "lab_interpretation",
+      "input": "Interpret these lab results: Sodium 128, Potassium 5.8, Creatinine 3.2, BUN 45, GFR 18. What is the likely condition?",
+      "expected_elements": ["kidney", "renal", "failure", "CKD", "electrolyte", "abnormal"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "diag_002",
+      "category": "diagnosis",
+      "task": "ecg_interpretation",
+      "input": "An ECG shows ST elevation in leads II, III, and aVF with reciprocal changes in I and aVL. What is the diagnosis and what immediate actions should be taken?",
+      "expected_elements": ["STEMI", "ST elevation", "myocardial infarction", "heart attack", "catheterization", "emergency", "intervention"],
+      "difficulty": "medium"
+    },
+    {
+      "id": "pat_001",
+      "category": "patient_communication",
+      "task": "explanation",
+      "input": "Explain to a patient in simple terms what type 2 diabetes is and why lifestyle changes are important.",
+      "expected_elements": ["blood sugar", "glucose", "insulin", "diet", "weight", "exercise", "lifestyle"],
+      "difficulty": "easy"
+    },
+    {
+      "id": "pat_002",
+      "category": "patient_communication",
+      "task": "explanation",
+      "input": "A patient asks why they need to take a statin even though they feel fine. Provide a patient-friendly explanation.",
+      "expected_elements": ["cholesterol", "heart", "prevent", "risk", "artery", "plaque", "silent"],
+      "difficulty": "easy"
+    }
+  ]
+}

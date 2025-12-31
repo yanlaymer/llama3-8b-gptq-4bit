@@ -143,26 +143,41 @@ Each run generates `quantization_metadata.json` with complete configuration and 
 
 ## Results
 
-### Llama-3-8B-Instruct Performance
+### Production Validated Model
 
-| Metric | FP16 | GPTQ-4bit | Delta | Compression |
-|--------|------|-----------|-------|-------------|
-| Perplexity (WikiText2) | 6.14 | 6.28 | +2.3% | 4× |
-| HellaSwag | 0.821 | 0.813 | -1.0% | 4× |
-| ARC-Easy | 0.856 | 0.847 | -1.1% | 4× |
-| MMLU | 0.687 | 0.674 | -1.9% | 4× |
-| Latency (BS=1) | 62ms | 31ms | -50% | - |
-| Throughput | 126 tok/s | 246 tok/s | +95% | - |
+**Model**: [`nalrunyan/llama3-8b-gptq-4bit`](https://huggingface.co/nalrunyan/llama3-8b-gptq-4bit)
 
-*Benchmarked on NVIDIA A6000 (48GB), CUDA 12.1*
+Validated on GCP g2-standard-4 (NVIDIA L4 23GB) with vLLM v0.13.0.
+
+### Medical Domain Performance (15 Test Cases)
+
+| Category | Test Cases | Avg Coverage | Pass Rate |
+|----------|------------|--------------|-----------|
+| **Medication** | 3 | 100.0% | 100.0% |
+| **Clinical QA** | 4 | 88.7% | 100.0% |
+| **Patient Communication** | 2 | 78.6% | 100.0% |
+| **Radiology** | 4 | 78.9% | 75.0% |
+| **Diagnosis** | 2 | 60.7% | 50.0% |
+| **TOTAL** | **15** | **83.2%** | **86.7%** |
+
+### Inference Performance
+
+| Metric | Value |
+|--------|-------|
+| **Aggregate Throughput** | 321.8 tokens/sec |
+| **Single Stream Speed** | ~50.7 tokens/sec |
+| **First Token Latency** | ~800ms |
+| **Avg Latency per Prompt** | 1.37 seconds |
+
+*Benchmarked on NVIDIA L4 (23GB), vLLM v0.13.0*
 
 ### Model Size Comparison
 
 | Configuration | Size | Memory Usage | Max Context |
 |--------------|------|--------------|-------------|
 | FP16 | 16GB | 18GB | 8K |
-| GPTQ-4bit | 4.2GB | 6GB | 32K |
-| GPTQ-3bit | 3.2GB | 5GB | 48K |
+| GPTQ-4bit | 5.35GB | 6.12GB | 8K |
+| Compression | **3x** | **3x** | - |
 
 ## Hardware & Performance Tips
 
